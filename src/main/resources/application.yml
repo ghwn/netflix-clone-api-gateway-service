@@ -44,10 +44,6 @@ spring:
           filters:
             - RewritePath=/movie-service/(?<segment>.*), /$\{segment}
             - JwtAuthenticationFilter
-  rabbitmq:
-    host: localhost
-    username: guest
-    password: guest
 
 eureka:
   client:
