@@ -7,14 +7,35 @@ spring:
   cloud:
     gateway:
       routes:
+        # Sign up (public)
+        - id: account-service
+          uri: lb://ACCOUNT-SERVICE
+          predicates:
+            - Path=/account-service/api/v1/accounts
+            - Method=POST
+          filters:
+            - RewritePath=/account-service/(?<segment>.*), /$\{segment}
+
+        # Login (public)
+        - id: account-service
+          uri: lb://ACCOUNT-SERVICE
+          predicates:
+            - Path=/account-service/login
+            - Method=POST
+          filters:
+            - RewritePath=/account-service/(?<segment>.*), /$\{segment}
+
+        # Account APIs (secured)
         - id: account-service
           uri: lb://ACCOUNT-SERVICE
           predicates:
             - Path=/account-service/**
-            - Method=GET,POST
+            - Method=GET,POST,PUT,DELETE
           filters:
             - RewritePath=/account-service/(?<segment>.*), /$\{segment}
+            - JwtAuthenticationFilter
 
+        # Movie APIs (secured)
         - id: movie-service
           uri: lb://MOVIE-SERVICE
           predicates:
@@ -22,6 +43,7 @@ spring:
             - Method=GET,POST
           filters:
             - RewritePath=/movie-service/(?<segment>.*), /$\{segment}
+            - JwtAuthenticationFilter
 
 eureka:
   client:
@@ -35,3 +57,6 @@ management:
     web:
       exposure:
         include: info, health
+
+jwt:
+  secret: bXluYW1laXNqaWh3YW5saW1hbmRub3dvY3RvYmVyMjJmcmlkYXlhbmRpYW12ZXJ5dGlyZWRiZWNhdXNlaWp1c3RzdHJpa2VteWJvZHlpbmd5bQ==
