@@ -57,6 +57,3 @@ management:
     web:
       exposure:
         include: info, health
-
-jwt:
-  secret: bXluYW1laXNqaWh3YW5saW1hbmRub3dvY3RvYmVyMjJmcmlkYXlhbmRpYW12ZXJ5dGlyZWRiZWNhdXNlaWp1c3RzdHJpa2VteWJvZHlpbmd5bQ==
