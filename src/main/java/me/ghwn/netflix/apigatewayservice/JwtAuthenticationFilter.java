@@ -1,5 +1,6 @@
 package me.ghwn.netflix.apigatewayservice;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -50,17 +51,33 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             byte[] keyBytes = Decoders.BASE64.decode(env.getProperty("jwt.secret"));
             SecretKey secretKey = Keys.hmacShaKeyFor(keyBytes);
 
-            String subject = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(jwtToken)
-                    .getBody()
-                    .getSubject();
+            String subject = null;
+            try {
+                subject = Jwts.parserBuilder()
+                        .setSigningKey(secretKey)
+                        .build()
+                        .parseClaimsJws(jwtToken)
+                        .getBody()
+                        .getSubject();
+            } catch (JwtException e) {
+                logger.error(e.getMessage());
+                return onError(exchange, HttpStatus.BAD_REQUEST);
+            }
 
             if (subject == null || subject.isEmpty()) {
                 logger.error("JWT token is not valid");
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
+
+            logger.info("JWT authentication passed. (URI: {}, Subject: {})", request.getURI(), subject);
+
+//            ServerHttpRequest mutatedRequest = request.mutate()
+//                    .header("test", "hi")
+//                    .build();
+//
+//            ServerWebExchange mutatedExchange = exchange.mutate()
+//                    .request(mutatedRequest)
+//                    .build();
 
             return chain.filter(exchange);
         };
