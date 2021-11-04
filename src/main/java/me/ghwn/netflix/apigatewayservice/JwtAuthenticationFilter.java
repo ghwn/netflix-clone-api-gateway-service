@@ -24,6 +24,7 @@ import javax.crypto.SecretKey;
 public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final String BEARER_TOKEN_PREFIX = "Bearer ";
 
     private final Environment env;
 
@@ -39,14 +40,14 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             // Extract Authorization header
             ServerHttpRequest request = exchange.getRequest();
             HttpHeaders headers = request.getHeaders();
-            if (!headers.containsKey(HttpHeaders.AUTHORIZATION)) {
+            String authorization = headers.getFirst(HttpHeaders.AUTHORIZATION);
+            if (authorization == null || authorization.isEmpty()) {
                 logger.error(String.format("Header does not contain %s", HttpHeaders.AUTHORIZATION));
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
-            String authorization = headers.getFirst(HttpHeaders.AUTHORIZATION);
 
             // Valid JWT token
-            String jwtToken = authorization.replace("Bearer ", "");
+            String jwtToken = authorization.substring(BEARER_TOKEN_PREFIX.length());
 
             byte[] keyBytes = Decoders.BASE64.decode(env.getProperty("jwt.secret"));
             SecretKey secretKey = Keys.hmacShaKeyFor(keyBytes);
@@ -61,7 +62,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .getSubject();
             } catch (JwtException e) {
                 logger.error(e.getMessage());
-                return onError(exchange, HttpStatus.BAD_REQUEST);
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
             if (subject == null || subject.isEmpty()) {
@@ -70,14 +71,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             }
 
             logger.info("JWT authentication passed. (URI: {}, Subject: {})", request.getURI(), subject);
-
-//            ServerHttpRequest mutatedRequest = request.mutate()
-//                    .header("test", "hi")
-//                    .build();
-//
-//            ServerWebExchange mutatedExchange = exchange.mutate()
-//                    .request(mutatedRequest)
-//                    .build();
 
             return chain.filter(exchange);
         };
