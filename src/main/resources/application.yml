@@ -25,15 +25,6 @@ spring:
           filters:
             - RewritePath=/account-service/(?<segment>.*), /$\{segment}
 
-        # Refresh Token (public)
-        - id: account-service
-          uri: lb://ACCOUNT-SERVICE
-          predicates:
-            - Path=/account-service/api/v1/accounts/*/refresh-token
-            - Method=GET
-          filters:
-            - RewritePath=/account-service/(?<segment>.*), /$\{segment}
-
         # Account APIs (secured)
         - id: account-service
           uri: lb://ACCOUNT-SERVICE
